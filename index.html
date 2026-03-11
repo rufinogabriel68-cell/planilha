@@ -311,11 +311,11 @@
             </div>
             <div class="stat-box" style="background: #e74c3c;">
                 <div class="stat-number" id="naoConcluidos">0</div>
-                <div class="stat-label">NÃO CONCLUÍDOS</div>
+                <div class="stat-label">SEM PASSAGEM</div>
             </div>
             <div class="stat-box" style="background: #f39c12;">
                 <div class="stat-number" id="emAndamento">0</div>
-                <div class="stat-label">EM ANDAMENTO</div>
+                <div class="stat-label">INTERNO</div>
             </div>
             <div class="stat-box" style="background: #95a5a6;">
                 <div class="stat-number" id="pendentes">0</div>
@@ -383,6 +383,7 @@
             const tr = document.createElement('tr');
             const andarStr = andar.toString().padStart(1, '0');
             
+
             let html = `<td class="andar">${andar}</td>`;
             
             for (let apto = 1; apto <= 8; apto++) {
@@ -395,8 +396,8 @@
                         <select id="select_${id}" class="pendente" data-apto="${aptoNum}">
                             <option value="pendente" selected>PENDENTE</option>
                             <option value="concluido">CONCLUÍDO</option>
-                            <option value="naoconcluido">NÃO CONCLUÍDO</option>
-                            <option value="emandamento">EM ANDAMENTO</option>
+                            <option value="naoconcluido">SEM PASSAGEM</option>
+                            <option value="emandamento">INTERNO</option>
                         </select>
                     </td>
                     <td>
