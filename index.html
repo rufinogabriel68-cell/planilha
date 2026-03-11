@@ -30,8 +30,33 @@
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-size: 24px;
+        }
+        
+        .status-conexao {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .online {
+            color: #27ae60;
+        }
+        
+        .offline {
+            color: #e74c3c;
+        }
+        
+        .syncing {
+            color: #f39c12;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         table {
@@ -92,6 +117,11 @@
             appearance: none;
             text-align: center;
             text-align-last: center;
+            transition: all 0.3s;
+        }
+        
+        select:hover {
+            transform: scale(1.05);
         }
         
         select.concluido {
@@ -121,6 +151,23 @@
             border-radius: 4px;
             font-size: 11px;
             text-align: center;
+            transition: all 0.3s;
+        }
+        
+        input.obs:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        input.obs.saving {
+            background: #fff3cd;
+            border-color: #f39c12;
+        }
+        
+        input.obs.saved {
+            background: #d4edda;
+            border-color: #27ae60;
         }
         
         tr:hover {
@@ -153,28 +200,71 @@
             opacity: 0.9;
         }
         
-        .export-btn {
-            margin: 20px auto;
-            display: block;
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
             padding: 12px 30px;
-            background: #3498db;
-            color: white;
             border: none;
             border-radius: 6px;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.3s;
+            font-weight: 600;
         }
         
-        .export-btn:hover {
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
             background: #2980b9;
             transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .last-update {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .user-count {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
+    <div class="user-count" id="userCount">👥 1 usuário online</div>
+    
     <div class="container">
         <h1>📋 CONTROLE DE APARTAMENTOS - TELEFONIA</h1>
+        <div class="status-conexao" id="statusConexao">🟡 Conectando...</div>
         
         <table id="tabelaApartamentos">
             <thead>
@@ -233,13 +323,62 @@
             </div>
         </div>
         
-        <button class="export-btn" onclick="exportarCSV()">📥 EXPORTAR PARA EXCEL</button>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="exportarCSV()">📥 EXPORTAR PARA EXCEL</button>
+            <button class="btn btn-warning" onclick="limparTodos()">🗑️ LIMPAR TODOS</button>
+        </div>
+        
+        <div class="last-update" id="lastUpdate">Última atualização: -</div>
     </div>
 
-    <script>
-        const tbody = document.getElementById('tabelaBody');
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, onDisconnect, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Configuração do Firebase - SUBSTITUA COM SUAS CREDENCIAIS
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            databaseURL: "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
         
-        // Gerar linhas da tabela
+        // Referências do banco de dados
+        const dadosRef = ref(db, 'apartamentos');
+        const usuariosRef = ref(db, 'usuarios');
+        
+        // Gerar ID único para este usuário
+        const usuarioId = push(usuariosRef).key;
+        const usuarioRef = ref(db, `usuarios/${usuarioId}`);
+        
+        // Marcar usuário como online
+        set(usuarioRef, {
+            online: true,
+            timestamp: Date.now()
+        });
+        
+        // Remover quando desconectar
+        onDisconnect(usuarioRef).remove();
+        
+        // Contar usuários online
+        onValue(usuariosRef, (snapshot) => {
+            const count = snapshot.size || 0;
+            document.getElementById('userCount').textContent = `👥 ${count} usuário${count !== 1 ? 's' : ''} online`;
+        });
+
+        // Gerar tabela
+        const tbody = document.getElementById('tabelaBody');
+        const selects = {};
+        const inputs = {};
+        
         for (let andar = 14; andar >= 1; andar--) {
             const tr = document.createElement('tr');
             const andarStr = andar.toString().padStart(2, '0');
@@ -248,17 +387,21 @@
             
             for (let apto = 1; apto <= 8; apto++) {
                 const aptoNum = `${andarStr}${apto.toString().padStart(2, '0')}`;
+                const id = `apto_${aptoNum}`;
+                
                 html += `
                     <td class="apto-num">${aptoNum}</td>
                     <td>
-                        <select class="pendente" onchange="atualizarCor(this); atualizarEstatisticas()">
+                        <select id="select_${id}" class="pendente" data-apto="${aptoNum}">
                             <option value="pendente" selected>PENDENTE</option>
                             <option value="concluido">CONCLUÍDO</option>
                             <option value="naoconcluido">NÃO CONCLUÍDO</option>
                             <option value="emandamento">EM ANDAMENTO</option>
                         </select>
                     </td>
-                    <td><input type="text" class="obs" placeholder="-"></td>
+                    <td>
+                        <input type="text" id="obs_${id}" class="obs" placeholder="-" data-apto="${aptoNum}">
+                    </td>
                 `;
             }
             
@@ -266,15 +409,108 @@
             tbody.appendChild(tr);
         }
         
+        // Registrar elementos
+        document.querySelectorAll('select').forEach(select => {
+            selects[select.dataset.apto] = select;
+            select.addEventListener('change', (e) => {
+                atualizarCor(e.target);
+                salvarDados();
+            });
+        });
+        
+        document.querySelectorAll('input.obs').forEach(input => {
+            inputs[input.dataset.apto] = input;
+            let timeout;
+            input.addEventListener('input', (e) => {
+                e.target.classList.add('saving');
+                e.target.classList.remove('saved');
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    salvarDados();
+                }, 500);
+            });
+        });
+        
         function atualizarCor(select) {
             select.className = select.value;
         }
         
+        function salvarDados() {
+            document.getElementById('statusConexao').className = 'status-conexao syncing';
+            document.getElementById('statusConexao').textContent = '⏳ Salvando...';
+            
+            const dados = {};
+            
+            Object.keys(selects).forEach(apto => {
+                dados[apto] = {
+                    status: selects[apto].value,
+                    obs: inputs[apto].value,
+                    ultimaAlteracao: Date.now()
+                };
+            });
+            
+            set(dadosRef, dados)
+                .then(() => {
+                    document.getElementById('statusConexao').className = 'status-conexao online';
+                    document.getElementById('statusConexao').textContent = '✅ Conectado (salvo em tempo real)';
+                    
+                    Object.values(inputs).forEach(input => {
+                        if (input.classList.contains('saving')) {
+                            input.classList.remove('saving');
+                            input.classList.add('saved');
+                            setTimeout(() => input.classList.remove('saved'), 1000);
+                        }
+                    });
+                    
+                    atualizarEstatisticas();
+                })
+                .catch((error) => {
+                    document.getElementById('statusConexao').className = 'status-conexao offline';
+                    document.getElementById('statusConexao').textContent = '❌ Erro ao salvar: ' + error.message;
+                });
+        }
+        
+        // Escutar mudanças em tempo real
+        onValue(dadosRef, (snapshot) => {
+            const dados = snapshot.val();
+            if (!dados) return;
+            
+            let houveMudanca = false;
+            
+            Object.keys(dados).forEach(apto => {
+                if (selects[apto] && inputs[apto]) {
+                    const select = selects[apto];
+                    const input = inputs[apto];
+                    
+                    // Só atualiza se o valor for diferente (evita loop)
+                    if (select.value !== dados[apto].status) {
+                        select.value = dados[apto].status;
+                        atualizarCor(select);
+                        houveMudanca = true;
+                    }
+                    
+                    if (input.value !== (dados[apto].obs || '')) {
+                        input.value = dados[apto].obs || '';
+                        houveMudanca = true;
+                    }
+                }
+            });
+            
+            if (houveMudanca) {
+                atualizarEstatisticas();
+                const agora = new Date().toLocaleString('pt-BR');
+                document.getElementById('lastUpdate').textContent = `Última atualização: ${agora}`;
+            }
+            
+            document.getElementById('statusConexao').className = 'status-conexao online';
+            document.getElementById('statusConexao').textContent = '✅ Sincronizado em tempo real';
+        });
+        
         function atualizarEstatisticas() {
-            const selects = document.querySelectorAll('select');
+            const todosSelects = Object.values(selects);
             let concluidos = 0, naoConcluidos = 0, emAndamento = 0, pendentes = 0;
             
-            selects.forEach(s => {
+            todosSelects.forEach(s => {
                 if (s.value === 'concluido') concluidos++;
                 else if (s.value === 'naoconcluido') naoConcluidos++;
                 else if (s.value === 'emandamento') emAndamento++;
@@ -287,38 +523,46 @@
             document.getElementById('pendentes').textContent = pendentes;
         }
         
-        function exportarCSV() {
+        // Exportar CSV
+        window.exportarCSV = function() {
             let csv = 'ANDAR;';
             for (let i = 1; i <= 8; i++) {
                 csv += `APTO${i};STATUS${i};OBS${i};`;
             }
             csv += '\n';
             
-            const linhas = document.querySelectorAll('tbody tr');
-            linhas.forEach(linha => {
-                const andar = linha.querySelector('.andar').textContent;
+            for (let andar = 14; andar >= 1; andar--) {
+                const andarStr = andar.toString().padStart(2, '0');
                 csv += `${andar};`;
                 
-                const selects = linha.querySelectorAll('select');
-                const inputs = linha.querySelectorAll('input');
-                
-                for (let i = 0; i < 8; i++) {
-                    const apto = linha.querySelectorAll('.apto-num')[i].textContent;
-                    const status = selects[i].value;
-                    const obs = inputs[i].value;
-                    csv += `${apto};${status};${obs};`;
+                for (let apto = 1; apto <= 8; apto++) {
+                    const aptoNum = `${andarStr}${apto.toString().padStart(2, '0')}`;
+                    const status = selects[aptoNum].value;
+                    const obs = inputs[aptoNum].value;
+                    csv += `${aptoNum};${status};${obs};`;
                 }
                 csv += '\n';
-            });
+            }
             
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'controle_apartamentos.csv';
+            link.download = `controle_apartamentos_${new Date().toISOString().slice(0,10)}.csv`;
             link.click();
-        }
+        };
         
-        // Inicializar estatísticas
+        // Limpar todos
+        window.limparTodos = function() {
+            if (confirm('⚠️ Tem certeza que deseja limpar TODOS os dados?\nEsta ação não pode ser desfeita!')) {
+                set(dadosRef, null)
+                    .then(() => {
+                        alert('✅ Todos os dados foram limpos!');
+                        location.reload();
+                    });
+            }
+        };
+        
+        // Inicializar
         atualizarEstatisticas();
     </script>
 </body>
