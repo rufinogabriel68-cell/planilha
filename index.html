@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Apartamentos - Telefonia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        th {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 5px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th.andar-col {
+            background: #1a252f;
+            min-width: 50px;
+        }
+        
+        th.apto-header {
+            background: #34495e;
+            min-width: 80px;
+        }
+        
+        td {
+            padding: 8px 4px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        td.andar {
+            background: #ecf0f1;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .apto-num {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 11px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            appearance: none;
+            text-align: center;
+            text-align-last: center;
+        }
+        
+        select.concluido {
+            background: #27ae60;
+            color: white;
+        }
+        
+        select.naoconcluido {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        select.pendente {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        select.em-andamento {
+            background: #f39c12;
+            color: white;
+        }
+        
+        input.obs {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: center;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .stats {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .stat-box {
+            background: #34495e;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .export-btn {
+            margin: 20px auto;
+            display: block;
+            padding: 12px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .export-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 CONTROLE DE APARTAMENTOS - TELEFONIA</h1>
+        
+        <table id="tabelaApartamentos">
+            <thead>
+                <tr>
+                    <th class="andar-col">ANDAR</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                    <th class="apto-header">APTO</th>
+                    <th>STATUS</th>
+                    <th>OBS</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaBody">
+            </tbody>
+        </table>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-number" id="totalAptos">112</div>
+                <div class="stat-label">TOTAL APARTAMENTOS</div>
+            </div>
+            <div class="stat-box" style="background: #27ae60;">
+                <div class="stat-number" id="concluidos">0</div>
+                <div class="stat-label">CONCLUÍDOS</div>
+            </div>
+            <div class="stat-box" style="background: #e74c3c;">
+                <div class="stat-number" id="naoConcluidos">0</div>
+                <div class="stat-label">NÃO CONCLUÍDOS</div>
+            </div>
+            <div class="stat-box" style="background: #f39c12;">
+                <div class="stat-number" id="emAndamento">0</div>
+                <div class="stat-label">EM ANDAMENTO</div>
+            </div>
+            <div class="stat-box" style="background: #95a5a6;">
+                <div class="stat-number" id="pendentes">0</div>
+                <div class="stat-label">PENDENTES</div>
+            </div>
+        </div>
+        
+        <button class="export-btn" onclick="exportarCSV()">📥 EXPORTAR PARA EXCEL</button>
+    </div>
+
+    <script>
+        const tbody = document.getElementById('tabelaBody');
+        
+        // Gerar linhas da tabela
+        for (let andar = 14; andar >= 1; andar--) {
+            const tr = document.createElement('tr');
+            const andarStr = andar.toString().padStart(2, '0');
+            
+            let html = `<td class="andar">${andar}</td>`;
+            
+            for (let apto = 1; apto <= 8; apto++) {
+                const aptoNum = `${andarStr}${apto.toString().padStart(2, '0')}`;
+                html += `
+                    <td class="apto-num">${aptoNum}</td>
+                    <td>
+                        <select class="pendente" onchange="atualizarCor(this); atualizarEstatisticas()">
+                            <option value="pendente" selected>PENDENTE</option>
+                            <option value="concluido">CONCLUÍDO</option>
+                            <option value="naoconcluido">NÃO CONCLUÍDO</option>
+                            <option value="emandamento">EM ANDAMENTO</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="obs" placeholder="-"></td>
+                `;
+            }
+            
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+        }
+        
+        function atualizarCor(select) {
+            select.className = select.value;
+        }
+        
+        function atualizarEstatisticas() {
+            const selects = document.querySelectorAll('select');
+            let concluidos = 0, naoConcluidos = 0, emAndamento = 0, pendentes = 0;
+            
+            selects.forEach(s => {
+                if (s.value === 'concluido') concluidos++;
+                else if (s.value === 'naoconcluido') naoConcluidos++;
+                else if (s.value === 'emandamento') emAndamento++;
+                else pendentes++;
+            });
+            
+            document.getElementById('concluidos').textContent = concluidos;
+            document.getElementById('naoConcluidos').textContent = naoConcluidos;
+            document.getElementById('emAndamento').textContent = emAndamento;
+            document.getElementById('pendentes').textContent = pendentes;
+        }
+        
+        function exportarCSV() {
+            let csv = 'ANDAR;';
+            for (let i = 1; i <= 8; i++) {
+                csv += `APTO${i};STATUS${i};OBS${i};`;
+            }
+            csv += '\n';
+            
+            const linhas = document.querySelectorAll('tbody tr');
+            linhas.forEach(linha => {
+                const andar = linha.querySelector('.andar').textContent;
+                csv += `${andar};`;
+                
+                const selects = linha.querySelectorAll('select');
+                const inputs = linha.querySelectorAll('input');
+                
+                for (let i = 0; i < 8; i++) {
+                    const apto = linha.querySelectorAll('.apto-num')[i].textContent;
+                    const status = selects[i].value;
+                    const obs = inputs[i].value;
+                    csv += `${apto};${status};${obs};`;
+                }
+                csv += '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'controle_apartamentos.csv';
+            link.click();
+        }
+        
+        // Inicializar estatísticas
+        atualizarEstatisticas();
+    </script>
+</body>
+</html>
