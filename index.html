@@ -381,12 +381,12 @@
         
         for (let andar = 14; andar >= 1; andar--) {
             const tr = document.createElement('tr');
-            const andarStr = andar.toString().padStart(2, '0');
+            const andarStr = andar.toString().padStart(1, '0');
             
             let html = `<td class="andar">${andar}</td>`;
             
             for (let apto = 1; apto <= 8; apto++) {
-                const aptoNum = `${andarStr}${apto.toString().padStart(2, '0')}`;
+                const aptoNum = `${andarStr}${apto.toString().padStart(1, '0')}`;
                 const id = `apto_${aptoNum}`;
                 
                 html += `
